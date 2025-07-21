@@ -7,8 +7,21 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true
+}));
 app.use(express.json());
+
+// Add preflight handler for CORS
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.sendStatus(200);
+});
 
 // Tool definitions
 const tools = [
@@ -102,6 +115,9 @@ app.post("/mcp", async (req, res) => {
     const { jsonrpc, id, method, params } = req.body;
 
     console.log(`MCP Request: ${method}`, { id, params });
+    console.log(`Request Headers:`, req.headers);
+    console.log(`Request Origin:`, req.get('origin'));
+    console.log(`Request User-Agent:`, req.get('user-agent'));
 
     // Set headers for streaming
     res.setHeader('Content-Type', 'application/json');
@@ -250,12 +266,16 @@ app.post("/mcp", async (req, res) => {
 
 // Health check endpoint
 app.get("/health", (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Cache-Control', 'no-cache');
   res.json({
     status: "healthy",
     server: "elevenlabs-mcp-server",
     version: "1.0.0",
     tools: tools.map(t => t.name),
-    transport: "true-streamable-http"
+    transport: "true-streamable-http",
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
@@ -274,9 +294,11 @@ app.get("/", (req, res) => {
 });
 
 // Start server
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
   console.error(`🚀 ElevenLabs MCP Server (True Streamable HTTP) started on port ${port}`);
-  console.error(`📡 Server URL: http://localhost:${port}/mcp`);
+  console.error(`📡 Server URL: http://0.0.0.0:${port}/mcp`);
   console.error(`🛠️  Available tools: ${tools.map(t => t.name).join(", ")}`);
   console.error(`🔧 Transport: True Streamable HTTP with chunked responses`);
+  console.error(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.error(`🔗 Railway URL: ${process.env.RAILWAY_STATIC_URL || 'Not set'}`);
 }); 
