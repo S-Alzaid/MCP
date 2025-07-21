@@ -8,6 +8,7 @@
     "start": "node elevenlabs-true-streamable.js",
     "start:true-streamable": "node elevenlabs-true-streamable.js",
     "dev": "node elevenlabs-true-streamable.js",
+    "build": "echo 'No build step needed for pure JavaScript'",
     "test": "jest"
   },
   "keywords": ["mcp", "agent", "protocol"],

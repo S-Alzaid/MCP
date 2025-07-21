@@ -39,10 +39,10 @@ This is an ElevenLabs MCP (Model Context Protocol) server built in pure JavaScri
 ## Deployment Requirements
 
 ### Railway Deployment
-- **Build Command**: `npm install` (NOT `npm run build`)
+- **Build Command**: `npm install && npm run build` (build script is a no-op)
 - **Start Command**: `npm start`
 - **Health Check**: `/health` endpoint
-- **Critical**: Must NOT include TypeScript build step
+- **Critical**: Build script exists but does nothing (satisfies Railway's expectations)
 
 ### ElevenLabs Requirements
 - **Transport**: Streamable HTTP (chunked transfer encoding)
@@ -83,13 +83,15 @@ This is an ElevenLabs MCP (Model Context Protocol) server built in pure JavaScri
 ## Critical Rules (DO NOT BREAK)
 
 ### ✅ DO
-- Keep `railway.json` build command as `npm install`
+- Keep `railway.json` build command as `npm install && npm run build`
+- Keep `package.json` build script as a no-op (`echo 'No build step needed'`)
 - Maintain `Transfer-Encoding: chunked` headers
 - Use `res.write()` and `res.end()` for responses
 - Keep all tools hardcoded in the main file
 
 ### ❌ DON'T
-- Add TypeScript build steps to Railway config
+- Remove the build script from package.json (Railway expects it)
+- Add actual TypeScript build steps to Railway config
 - Remove streaming headers from responses
 - Split tools into separate modules
 - Add complex build processes
