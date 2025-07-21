@@ -10,7 +10,7 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Tool definitions for ElevenLabs
+// Tool definitions
 const tools = [
   {
     name: "search_web",
@@ -96,15 +96,21 @@ async function handleCalculate(args) {
   }
 }
 
-// Streamable HTTP MCP endpoint for ElevenLabs
+// True Streamable HTTP MCP endpoint
 app.post("/mcp", async (req, res) => {
   try {
     const { jsonrpc, id, method, params } = req.body;
 
     console.log(`MCP Request: ${method}`, { id, params });
 
+    // Set headers for streaming
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Transfer-Encoding', 'chunked');
+
     if (jsonrpc !== "2.0") {
-      return res.status(400).json({
+      const errorResponse = JSON.stringify({
         jsonrpc: "2.0",
         id,
         error: {
@@ -112,12 +118,16 @@ app.post("/mcp", async (req, res) => {
           message: "Invalid Request"
         }
       });
+      
+      res.write(errorResponse);
+      res.end();
+      return;
     }
 
     switch (method) {
       case "initialize":
         console.log("Initializing MCP connection");
-        return res.json({
+        const initResponse = JSON.stringify({
           jsonrpc: "2.0",
           id,
           result: {
@@ -131,23 +141,31 @@ app.post("/mcp", async (req, res) => {
             }
           }
         });
+        
+        res.write(initResponse);
+        res.end();
+        break;
 
       case "tools/list":
         console.log("Listing tools:", tools.map(t => t.name));
-        return res.json({
+        const toolsResponse = JSON.stringify({
           jsonrpc: "2.0",
           id,
           result: {
             tools
           }
         });
+        
+        res.write(toolsResponse);
+        res.end();
+        break;
 
       case "tools/call":
         const { name, arguments: args } = params;
         console.log(`Calling tool: ${name}`, args);
         
         if (!args) {
-          return res.json({
+          const errorResponse = JSON.stringify({
             jsonrpc: "2.0",
             id,
             error: {
@@ -155,6 +173,10 @@ app.post("/mcp", async (req, res) => {
               message: "Invalid params: arguments are required"
             }
           });
+          
+          res.write(errorResponse);
+          res.end();
+          return;
         }
 
         let result;
@@ -169,7 +191,7 @@ app.post("/mcp", async (req, res) => {
             result = await handleCalculate(args);
             break;
           default:
-            return res.json({
+            const errorResponse = JSON.stringify({
               jsonrpc: "2.0",
               id,
               error: {
@@ -177,18 +199,26 @@ app.post("/mcp", async (req, res) => {
                 message: `Unknown tool: ${name}`
               }
             });
+            
+            res.write(errorResponse);
+            res.end();
+            return;
         }
 
         console.log(`Tool ${name} result:`, result);
-        return res.json({
+        const callResponse = JSON.stringify({
           jsonrpc: "2.0",
           id,
           result
         });
+        
+        res.write(callResponse);
+        res.end();
+        break;
 
       default:
         console.log(`Unknown method: ${method}`);
-        return res.json({
+        const errorResponse = JSON.stringify({
           jsonrpc: "2.0",
           id,
           error: {
@@ -196,10 +226,14 @@ app.post("/mcp", async (req, res) => {
             message: `Method not found: ${method}`
           }
         });
+        
+        res.write(errorResponse);
+        res.end();
+        break;
     }
   } catch (error) {
     console.error("Error handling MCP request:", error);
-    return res.status(500).json({
+    const errorResponse = JSON.stringify({
       jsonrpc: "2.0",
       id: req.body.id,
       error: {
@@ -208,6 +242,9 @@ app.post("/mcp", async (req, res) => {
         data: error instanceof Error ? error.message : "Unknown error"
       }
     });
+    
+    res.write(errorResponse);
+    res.end();
   }
 });
 
@@ -218,27 +255,28 @@ app.get("/health", (req, res) => {
     server: "elevenlabs-mcp-server",
     version: "1.0.0",
     tools: tools.map(t => t.name),
-    transport: "streamable-http"
+    transport: "true-streamable-http"
   });
 });
 
-// Root endpoint for testing
+// Root endpoint
 app.get("/", (req, res) => {
   res.json({
-    message: "ElevenLabs MCP Server",
+    message: "ElevenLabs MCP Server (True Streamable HTTP)",
     version: "1.0.0",
     endpoints: {
       mcp: "/mcp",
       health: "/health"
     },
-    tools: tools.map(t => t.name)
+    tools: tools.map(t => t.name),
+    transport: "Streamable HTTP with chunked responses"
   });
 });
 
 // Start server
 app.listen(port, () => {
-  console.error(`🚀 ElevenLabs MCP Server (Streamable HTTP) started on port ${port}`);
+  console.error(`🚀 ElevenLabs MCP Server (True Streamable HTTP) started on port ${port}`);
   console.error(`📡 Server URL: http://localhost:${port}/mcp`);
   console.error(`🛠️  Available tools: ${tools.map(t => t.name).join(", ")}`);
-  console.error(`🔧 Transport: Streamable HTTP (ElevenLabs compatible)`);
+  console.error(`🔧 Transport: True Streamable HTTP with chunked responses`);
 }); 

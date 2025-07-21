@@ -28,7 +28,7 @@ This server is specifically designed for ElevenLabs conversational agents. For d
 
 ### Quick Start for ElevenLabs:
 ```bash
-npm run dev:elevenlabs
+npm start
 ```
 
 Then add `http://localhost:3000/mcp` to your ElevenLabs agent's MCP server configuration.
@@ -37,16 +37,15 @@ Then add `http://localhost:3000/mcp` to your ElevenLabs agent's MCP server confi
 
 ### Development Mode
 
-Run the server in development mode with hot reloading:
+Run the server:
 ```bash
-npm run dev
+npm start
 ```
 
 ### Production Mode
 
-Build and run the server:
+Run the server:
 ```bash
-npm run build
 npm start
 ```
 
