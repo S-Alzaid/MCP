@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "my-mcp-server": {
+      "command": "node",
+      "args": ["./dist/index.js"],
+      "env": {},
+      "description": "A custom MCP server with web search, weather, and calculation tools"
+    }
+  }
+} 
