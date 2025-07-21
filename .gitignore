@@ -57,4 +57,10 @@ jspm_packages/
 *.tgz
 
 # Yarn Integrity file
-.yarn-integrity 
+.yarn-integrity
+
+# IMPORTANT: Project Structure Documentation
+# Before making ANY changes to this project, read PROJECT-STRUCTURE.md
+# This file contains critical deployment requirements and lessons learned
+# from previous failures. DO NOT modify build processes or file structure
+# without consulting this documentation first. 

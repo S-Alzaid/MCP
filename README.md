@@ -2,6 +2,8 @@
 
 A Model Context Protocol (MCP) server specifically designed for ElevenLabs conversational agents, providing tools for agents to interact with external services and perform various tasks.
 
+> **📋 Project Documentation**: This project has specific deployment requirements and structure decisions. See [PROJECT-STRUCTURE.md](./PROJECT-STRUCTURE.md) before making any changes.
+
 ## Features
 
 This MCP server provides the following tools:
@@ -17,14 +19,16 @@ This MCP server provides the following tools:
 npm install
 ```
 
-2. Build the project:
+2. Start the server:
 ```bash
-npm run build
+npm start
 ```
 
 ## ElevenLabs Integration
 
 This server is specifically designed for ElevenLabs conversational agents. For detailed setup instructions, see [ELEVENLABS-INTEGRATION.md](./ELEVENLABS-INTEGRATION.md).
+
+**⚠️ IMPORTANT**: Before making any changes to this project, read [PROJECT-STRUCTURE.md](./PROJECT-STRUCTURE.md) for critical deployment requirements and lessons learned.
 
 ### Quick Start for ElevenLabs:
 ```bash
@@ -53,29 +57,39 @@ npm start
 
 The server can be configured by modifying the following:
 
-- **Server name and version**: Edit `src/index.ts`
-- **Tool implementations**: Edit `src/tools.ts`
-- **Tool schemas**: Modify the Zod schemas in `src/tools.ts`
+- **Server name and version**: Edit `elevenlabs-true-streamable.js`
+- **Tool implementations**: Edit `elevenlabs-true-streamable.js`
+- **Tool schemas**: Modify the schemas in `elevenlabs-true-streamable.js`
+
+> **Note**: This project uses a single-file approach for deployment reliability. All tools and schemas are hardcoded in the main server file.
 
 ## Adding New Tools
 
 To add a new tool:
 
-1. Define the tool schema in `src/tools.ts`:
-```typescript
-export const NewToolSchema = z.object({
-  parameter: z.string().describe("Description of the parameter"),
-});
+1. Define the tool schema in `elevenlabs-true-streamable.js`:
+```javascript
+{
+  name: "new_tool",
+  description: "Description of the new tool",
+  inputSchema: {
+    type: "object",
+    properties: {
+      parameter: { type: "string", description: "Description of the parameter" }
+    },
+    required: ["parameter"]
+  }
+}
 ```
 
-2. Implement the tool handler:
-```typescript
-export async function handleNewTool(args: z.infer<typeof NewToolSchema>) {
+2. Implement the tool handler in `elevenlabs-true-streamable.js`:
+```javascript
+async function handleNewTool(args) {
   // Your tool implementation here
   return {
     content: [
       {
-        type: "text" as const,
+        type: "text",
         text: "Tool result",
       },
     ],
@@ -83,20 +97,11 @@ export async function handleNewTool(args: z.infer<typeof NewToolSchema>) {
 }
 ```
 
-3. Add the tool to the tools array:
-```typescript
-export const tools = [
-  // ... existing tools
-  {
-    name: "new_tool",
-    description: "Description of the new tool",
-    inputSchema: NewToolSchema,
-  },
-];
-```
+3. Add the tool to the tools array and the handler to the switch statement in `elevenlabs-true-streamable.js`
 
-4. Add the case in the switch statement in `src/index.ts`:
-```typescript
+> **Note**: This project uses a single-file approach. All modifications should be made directly in `elevenlabs-true-streamable.js`.
+
+```javascript
 case "new_tool":
   return await handleNewTool(args);
 ```
