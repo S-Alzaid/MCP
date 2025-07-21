@@ -11,8 +11,7 @@
     "start:simple": "node deploy-simple.js",
     "dev": "tsx src/index.ts",
     "dev:elevenlabs": "tsx src/elevenlabs-server.ts",
-    "test": "jest",
-    "postinstall": "npm run build"
+    "test": "jest"
   },
   "keywords": ["mcp", "agent", "protocol"],
   "author": "Your Name",
