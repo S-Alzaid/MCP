@@ -5,12 +5,14 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "npx tsc",
     "start": "node dist/index.js",
     "start:elevenlabs": "node dist/elevenlabs-server.js",
+    "start:simple": "node deploy-simple.js",
     "dev": "tsx src/index.ts",
     "dev:elevenlabs": "tsx src/elevenlabs-server.ts",
-    "test": "jest"
+    "test": "jest",
+    "postinstall": "npm run build"
   },
   "keywords": ["mcp", "agent", "protocol"],
   "author": "Your Name",
