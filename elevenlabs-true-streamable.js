@@ -59,6 +59,21 @@ const tools = [
       },
       required: ["expression"]
     }
+  },
+  {
+    name: "create_sickleave",
+    description: "Create a sick leave document for a patient",
+    inputSchema: {
+      type: "object",
+      properties: {
+        patient_id: { type: "string", description: "Patient ID" },
+        patient_dob: { type: "string", description: "Patient date of birth" },
+        practitioner_license: { type: "string", description: "Practitioner license number" },
+        admission_date: { type: "string", description: "Admission date" },
+        discharge_date: { type: "string", description: "Discharge date" }
+      },
+      required: ["patient_id", "patient_dob", "practitioner_license", "admission_date", "discharge_date"]
+    }
   }
 ];
 
@@ -109,6 +124,41 @@ async function handleCalculate(args) {
   }
 }
 
+async function handleCreateSickLeave(args) {
+  const { patient_id, patient_dob, practitioner_license, admission_date, discharge_date } = args;
+  
+  console.log(`Creating sick leave for patient: ${patient_id}`);
+  
+  try {
+    // Here you would typically make an API call to the external service
+    // For now, we'll simulate the API call and return a mock response
+    
+    const sickLeaveData = {
+      patient_id,
+      patient_dob,
+      practitioner_license,
+      admission_date,
+      discharge_date,
+      created_at: new Date().toISOString(),
+      status: "created"
+    };
+    
+    // Simulate API call to https://wth.devclan.io/function/create-sickleave
+    // In a real implementation, you would use fetch or axios to make the actual API call
+    
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Sick leave document created successfully!\n\nPatient ID: ${patient_id}\nDate of Birth: ${patient_dob}\nPractitioner License: ${practitioner_license}\nAdmission Date: ${admission_date}\nDischarge Date: ${discharge_date}\n\nDocument ID: SL-${Date.now()}\nStatus: Created`
+        }
+      ]
+    };
+  } catch (error) {
+    throw new Error(`Failed to create sick leave: ${error.message}`);
+  }
+}
+
 // True Streamable HTTP MCP endpoint
 app.post("/mcp", async (req, res) => {
   try {
@@ -124,6 +174,9 @@ app.post("/mcp", async (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('Transfer-Encoding', 'chunked');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
     if (jsonrpc !== "2.0") {
       const errorResponse = JSON.stringify({
@@ -206,6 +259,9 @@ app.post("/mcp", async (req, res) => {
           case "calculate":
             result = await handleCalculate(args);
             break;
+          case "create_sickleave":
+            result = await handleCreateSickLeave(args);
+            break;
           default:
             const errorResponse = JSON.stringify({
               jsonrpc: "2.0",
@@ -239,7 +295,11 @@ app.post("/mcp", async (req, res) => {
           id,
           error: {
             code: -32601,
-            message: `Method not found: ${method}`
+            message: `Method not found: ${method}`,
+            data: {
+              availableMethods: ["initialize", "tools/list", "tools/call"],
+              serverInfo: "ElevenLabs MCP Server"
+            }
           }
         });
         

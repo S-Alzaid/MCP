@@ -11,6 +11,7 @@ This MCP server provides the following tools:
 - **search_web**: Search the web for information
 - **get_weather**: Get current weather information for a location
 - **calculate**: Perform mathematical calculations
+- **create_sickleave**: Create a sick leave document for a patient
 
 ## Installation
 
