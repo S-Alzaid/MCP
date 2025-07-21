@@ -130,31 +130,102 @@ async function handleCreateSickLeave(args) {
   console.log(`Creating sick leave for patient: ${patient_id}`);
   
   try {
-    // Here you would typically make an API call to the external service
-    // For now, we'll simulate the API call and return a mock response
+    // Real API call to the protected endpoint
+    const apiUrl = 'https://wth.devclan.io/function/create-sickleave';
     
-    const sickLeaveData = {
+    const requestData = {
       patient_id,
       patient_dob,
       practitioner_license,
       admission_date,
-      discharge_date,
-      created_at: new Date().toISOString(),
-      status: "created"
+      discharge_date
     };
     
-    // Simulate API call to https://wth.devclan.io/function/create-sickleave
-    // In a real implementation, you would use fetch or axios to make the actual API call
+    console.log(`Making API call to: ${apiUrl}`);
+    console.log(`Request data:`, requestData);
     
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Sick leave document created successfully!\n\nPatient ID: ${patient_id}\nDate of Birth: ${patient_dob}\nPractitioner License: ${practitioner_license}\nAdmission Date: ${admission_date}\nDischarge Date: ${discharge_date}\n\nDocument ID: SL-${Date.now()}\nStatus: Created`
-        }
-      ]
+    // Make the actual API call using Node.js built-in https module
+    const https = require('https');
+    const url = require('url');
+    
+    const postData = JSON.stringify(requestData);
+    const parsedUrl = url.parse(apiUrl);
+    
+    const options = {
+      hostname: parsedUrl.hostname,
+      port: parsedUrl.port || 443,
+      path: parsedUrl.path,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData),
+        'User-Agent': 'MCP-Server/1.0'
+      },
+      timeout: 30000 // 30 second timeout
     };
+    
+    return new Promise((resolve, reject) => {
+      const req = https.request(options, (res) => {
+        console.log(`API Response Status: ${res.statusCode}`);
+        console.log(`API Response Headers:`, res.headers);
+        
+        let data = '';
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+        
+        res.on('end', () => {
+          console.log(`API Response Body:`, data);
+          
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            // Success response
+            try {
+              const responseData = JSON.parse(data);
+              resolve({
+                content: [
+                  {
+                    type: "text",
+                    text: `Sick leave document created successfully!\n\nPatient ID: ${patient_id}\nDate of Birth: ${patient_dob}\nPractitioner License: ${practitioner_license}\nAdmission Date: ${admission_date}\nDischarge Date: ${discharge_date}\n\nAPI Response: ${JSON.stringify(responseData, null, 2)}`
+                  }
+                ]
+              });
+            } catch (parseError) {
+              resolve({
+                content: [
+                  {
+                    type: "text",
+                    text: `Sick leave document created successfully!\n\nPatient ID: ${patient_id}\nDate of Birth: ${patient_dob}\nPractitioner License: ${practitioner_license}\nAdmission Date: ${admission_date}\nDischarge Date: ${discharge_date}\n\nRaw API Response: ${data}`
+                  }
+                ]
+              });
+            }
+          } else if (res.statusCode === 403) {
+            // Geographic restriction or access denied
+            reject(new Error(`Access denied (${res.statusCode}): This server's location is blocked by the API. Geographic restrictions are active.`));
+          } else {
+            // Other error
+            reject(new Error(`API call failed with status ${res.statusCode}: ${data}`));
+          }
+        });
+      });
+      
+      req.on('error', (error) => {
+        console.error('API request error:', error);
+        reject(new Error(`Network error: ${error.message}`));
+      });
+      
+      req.on('timeout', () => {
+        req.destroy();
+        reject(new Error('API request timed out after 30 seconds'));
+      });
+      
+      // Send the request
+      req.write(postData);
+      req.end();
+    });
+    
   } catch (error) {
+    console.error('Error in handleCreateSickLeave:', error);
     throw new Error(`Failed to create sick leave: ${error.message}`);
   }
 }
